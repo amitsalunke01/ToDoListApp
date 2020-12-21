@@ -34,3 +34,8 @@ abstract class TaskDatabase : RoomDatabase() {
         }
     }
 }
+//generally below viewModel people implement flow and in view Model they implement live data
+//difference between Flow data and liveData
+//LiveData - has the single latest value and not the whole stream of values like flow, it is lifecycle aware so lifecycle activity is handle is very well eg when the fragment goes into background
+//and becomes inactive, livedata will detect this and completely stop dispatching the event to the fragment
+//Flow - is used below the viewModel because u can transform the value as it passes whole stream, we can switch the threads in flow and  we cannot lose any data as the whole stream
