@@ -9,24 +9,28 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.amitsalunke.todolistapp.R
 import com.amitsalunke.todolistapp.data.SortOrder
+import com.amitsalunke.todolistapp.data.Task
 import com.amitsalunke.todolistapp.databinding.FragmentTasksBinding
 import com.amitsalunke.todolistapp.util.onQueryTextChanged
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class TaskFragment : Fragment(R.layout.fragment_tasks) {
+class TaskFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClickListener {
     private val viewModel: TaskViewModel by viewModels()//also called as property delegate
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentTasksBinding.bind(view)
-        val taskAdapter = TasksAdapter()
+        val taskAdapter = TasksAdapter(this)
 
         binding.apply {
             recyclerViewTasks.apply {
@@ -35,6 +39,24 @@ class TaskFragment : Fragment(R.layout.fragment_tasks) {
                     LinearLayoutManager(requireContext()) // requireContext() is fragment method
                 setHasFixedSize(true)
             }
+            //to handle swipe left and right ItemTouchHelper is part of recycleViewTasks , or operator is binary operator
+            ItemTouchHelper(object :
+                ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    //on move is up and down i.e is drag and drop
+                    return false
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                    //on swipe delete the task and show undo taskbar
+                    val task = taskAdapter.currentList[viewHolder.adapterPosition]
+                    viewModel.onTaskSwiped(task)
+                }
+            }).attachToRecyclerView(recyclerViewTasks)
         }
 
         //for fragment we use viewLifeCycleOwner as there are multiple fragment and so view hiracy is destroid but instance is there in backstack
@@ -44,7 +66,28 @@ class TaskFragment : Fragment(R.layout.fragment_tasks) {
             taskAdapter.submitList(it)
             //once data is given to submit list then diffUtil takes care after this
         }
+
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewModel.taskEvent.collect { event ->
+                when (event) {
+                    is TaskViewModel.TaskEvent.ShowUndoDeleteTaskMessage -> {
+                        Snackbar.make(requireView(), "Task Deleted ", Snackbar.LENGTH_LONG)
+                            .setAction("UNDO") {
+                                viewModel.onUndoDeleteClick(event.task)//event.task is smart cast
+                            }.show()
+                    }
+                }
+            }
+        }
         setHasOptionsMenu(true)
+    }
+
+    override fun onItemClick(task: Task) {
+        viewModel.onTaskSelected(task)
+    }
+
+    override fun onCheckBoxClick(task: Task, isChecked: Boolean) {
+        viewModel.onTaskCheckedChanged(task, isChecked)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
