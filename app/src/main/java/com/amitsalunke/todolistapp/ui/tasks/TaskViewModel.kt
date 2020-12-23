@@ -71,7 +71,9 @@ class TaskViewModel @ViewModelInject constructor(
         preferencesManager.updateHideCompleted(hideCompleted)
     }
 
-    fun onTaskSelected(task: Task) {}
+    fun onTaskSelected(task: Task) = viewModelScope.launch {
+        tasksEventChannel.send(TaskEvent.NavigateToEditTaskScreen(task))
+    }
 
     fun onTaskCheckedChanged(task: Task, isChecked: Boolean) = viewModelScope.launch {
         //as in task entity we have made each elements to be val and not var so hence we are using copy of task
@@ -93,8 +95,18 @@ class TaskViewModel @ViewModelInject constructor(
         taskDao.insert(task)
     }
 
+    //fab click
+    fun onAddNewTaskClick() = viewModelScope.launch {
+        tasksEventChannel.send(TaskEvent.NavigateToAddTaskScreen)
+    }
+
     sealed class TaskEvent {
+        object NavigateToAddTaskScreen :
+            TaskEvent()//it is created as object class as we not sending any data and there will be only single instance of this class
+
+        data class NavigateToEditTaskScreen(val task: Task) : TaskEvent()
         data class ShowUndoDeleteTaskMessage(val task: Task) : TaskEvent()
     }
+
 }
 

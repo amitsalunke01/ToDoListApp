@@ -9,6 +9,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,7 @@ import com.amitsalunke.todolistapp.R
 import com.amitsalunke.todolistapp.data.SortOrder
 import com.amitsalunke.todolistapp.data.Task
 import com.amitsalunke.todolistapp.databinding.FragmentTasksBinding
+import com.amitsalunke.todolistapp.util.exhaustive
 import com.amitsalunke.todolistapp.util.onQueryTextChanged
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -57,6 +59,10 @@ class TaskFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClick
                     viewModel.onTaskSwiped(task)
                 }
             }).attachToRecyclerView(recyclerViewTasks)
+
+            fabAddTask.setOnClickListener {
+                viewModel.onAddNewTaskClick()
+            }
         }
 
         //for fragment we use viewLifeCycleOwner as there are multiple fragment and so view hiracy is destroid but instance is there in backstack
@@ -67,6 +73,7 @@ class TaskFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClick
             //once data is given to submit list then diffUtil takes care after this
         }
 
+        //it is connected to the channel which is created in the viewModel
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.taskEvent.collect { event ->
                 when (event) {
@@ -76,7 +83,23 @@ class TaskFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClick
                                 viewModel.onUndoDeleteClick(event.task)//event.task is smart cast
                             }.show()
                     }
-                }
+                    is TaskViewModel.TaskEvent.NavigateToAddTaskScreen -> {
+                        val action =
+                            TaskFragmentDirections.actionTaskFragmentToAddEditTaskFragment(
+                                null,
+                                "New Task"
+                            )
+                        findNavController().navigate(action)
+                    }
+                    is TaskViewModel.TaskEvent.NavigateToEditTaskScreen -> {
+                        val action =
+                            TaskFragmentDirections.actionTaskFragmentToAddEditTaskFragment(
+                                event.task,
+                                "Edit Task"
+                            )
+                        findNavController().navigate(action)
+                    }
+                }.exhaustive
             }
         }
         setHasOptionsMenu(true)
