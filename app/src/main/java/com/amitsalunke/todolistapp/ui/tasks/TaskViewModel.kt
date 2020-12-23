@@ -1,9 +1,8 @@
 package com.amitsalunke.todolistapp.ui.tasks
 
+import androidx.hilt.Assisted
 import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.amitsalunke.todolistapp.data.PreferencesManager
 import com.amitsalunke.todolistapp.data.SortOrder
 import com.amitsalunke.todolistapp.data.Task
@@ -17,10 +16,14 @@ import kotlinx.coroutines.launch
 
 class TaskViewModel @ViewModelInject constructor(
     private val taskDao: TaskDao,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    @Assisted private val state: SavedStateHandle
 ) : ViewModel() {
-
-    val searchQuery = MutableStateFlow("")
+    //we cant store flow in saved state handle but we can store live data and we can turn live data to flow and vice a versa so to convert live data to flow is to use .asFlow()
+    //val searchQuery = MutableStateFlow("")
+    val searchQuery =
+        state.getLiveData("searchQuery", "") //"" is initial value as when start the app first time
+    //there is no need of to set state which is in livedata for future search query
 
     //logic for sorting by name and date and hide completed
     /* val sortOrder = MutableStateFlow(SortOrder.BY_DATE)
@@ -50,7 +53,7 @@ class TaskViewModel @ViewModelInject constructor(
     }*/
 
     private val tasksFlow = combine(
-        searchQuery,
+        searchQuery.asFlow(),
         preferencesFlow
     ) { query, filterPreferences ->
         Pair(query, filterPreferences)
