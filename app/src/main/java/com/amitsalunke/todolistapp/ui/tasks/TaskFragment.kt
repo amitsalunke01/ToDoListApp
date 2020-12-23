@@ -8,11 +8,16 @@ import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.amitsalunke.todolistapp.R
+import com.amitsalunke.todolistapp.data.SortOrder
 import com.amitsalunke.todolistapp.databinding.FragmentTasksBinding
 import com.amitsalunke.todolistapp.util.onQueryTextChanged
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class TaskFragment : Fragment(R.layout.fragment_tasks) {
@@ -50,23 +55,35 @@ class TaskFragment : Fragment(R.layout.fragment_tasks) {
             //update search query
             viewModel.searchQuery.value = it
         }
+
+        //to read the preferences
+
+        //coroutine scope which leaves as the view of the fragment lives
+        viewLifecycleOwner.lifecycleScope.launch {
+            menu.findItem(R.id.action_hide_completed_tasks).isChecked =
+                    //as we want to read the a value only one time i.e starting we use first instead of collect
+                viewModel.preferencesFlow.first().hideCompleted
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_sort_by_name -> {
-                viewModel.sortOrder.value = SortOrder.BY_NAME
+                //viewModel.sortOrder.value = SortOrder.BY_NAME
+                viewModel.onSortOrderSelected(SortOrder.BY_NAME)
                 true
             }
 
             R.id.action_sort_by_date_created -> {
-                viewModel.sortOrder.value = SortOrder.BY_DATE
+                //viewModel.sortOrder.value = SortOrder.BY_DATE
+                viewModel.onSortOrderSelected(SortOrder.BY_DATE)
                 true
             }
 
             R.id.action_hide_completed_tasks -> {
                 item.isChecked = !item.isChecked
-                viewModel.hideCompleted.value = item.isChecked
+                //viewModel.hideCompleted.value = item.isChecked
+                viewModel.onHideCompletedClick(item.isChecked)
                 true
             }
 
