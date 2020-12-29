@@ -43,6 +43,7 @@ class AddEditTaskViewModel @ViewModelInject constructor(
         if (taskName.isBlank()) {
             //invalid input msg
             showInvalidInputMessage("Name cannot be empty")
+            return
         }
 
         if (task != null) {

@@ -7,6 +7,8 @@ import com.amitsalunke.todolistapp.data.PreferencesManager
 import com.amitsalunke.todolistapp.data.SortOrder
 import com.amitsalunke.todolistapp.data.Task
 import com.amitsalunke.todolistapp.data.TaskDao
+import com.amitsalunke.todolistapp.ui.ADD_TASK_RESULT_OK
+import com.amitsalunke.todolistapp.ui.EDIT_TASK_RESULT_OK
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -100,12 +102,31 @@ class TaskViewModel @ViewModelInject constructor(
         tasksEventChannel.send(TaskEvent.NavigateToAddTaskScreen)
     }
 
+    fun onAddEditResult(result: Int) {
+        //we are not writing (is) as because we are comparing the value
+        when (result) {
+            ADD_TASK_RESULT_OK -> showTaskSavedConfirmationMessage("Task added")
+            EDIT_TASK_RESULT_OK -> showTaskSavedConfirmationMessage("Task updated")
+
+        }
+    }
+
+    private fun showTaskSavedConfirmationMessage(msg: String) = viewModelScope.launch {
+        tasksEventChannel.send(TaskEvent.ShowTaskSavedConfirmationMessage(msg))
+    }
+
+    fun onDeleteAllCompletedClick() = viewModelScope.launch {
+        tasksEventChannel.send(TaskEvent.NavigateToDeleteAllCompletedScreen)
+    }
+
     sealed class TaskEvent {
         object NavigateToAddTaskScreen :
             TaskEvent()//it is created as object class as we not sending any data and there will be only single instance of this class
 
         data class NavigateToEditTaskScreen(val task: Task) : TaskEvent()
         data class ShowUndoDeleteTaskMessage(val task: Task) : TaskEvent()
+        data class ShowTaskSavedConfirmationMessage(val msg: String) : TaskEvent()
+        object NavigateToDeleteAllCompletedScreen : TaskEvent()
     }
 
 }

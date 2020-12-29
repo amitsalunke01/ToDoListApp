@@ -2,11 +2,14 @@ package com.amitsalunke.todolistapp.ui.addedittask
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.amitsalunke.todolistapp.R
 import com.amitsalunke.todolistapp.databinding.FragmentAddEditTaskBinding
 import com.amitsalunke.todolistapp.util.exhaustive
@@ -55,9 +58,14 @@ class AddEditTaskFragment : Fragment(R.layout.fragment_add_edit_task) {
                     }
                     is AddEditTaskViewModel.AddEditTaskEvent.NavigationBackWithResult -> {
                         binding.editTextTaskName.clearFocus()
-
+                        //sending result btw fragments
+                        setFragmentResult(
+                            "add_edit_request",
+                            bundleOf("add_edit_result" to event.result)
+                        )//to operator is used to mapp key to value
+                        findNavController().popBackStack() //immedetly to this fragment from backstackvand go back to previous one
                     }
-                }.exhaustive
+                }.exhaustive //custom compile time error
             }
         }
     }

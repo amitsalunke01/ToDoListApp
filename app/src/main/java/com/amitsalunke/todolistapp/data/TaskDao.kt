@@ -22,10 +22,15 @@ interface TaskDao {
     fun getTasksSortedByDateCreated(searchQuery: String, hideCompleted: Boolean): Flow<List<Task>>
 
 
-    fun getTasks(query: String, sortOrder: SortOrder, hideCompleted: Boolean) : Flow<List<Task>> =
-        when(sortOrder){
-            SortOrder.BY_DATE -> getTasksSortedByDateCreated(query,hideCompleted)
-            SortOrder.BY_NAME -> getTasksSortedByName(query,hideCompleted)
+    fun getTasks(query: String, sortOrder: SortOrder, hideCompleted: Boolean): Flow<List<Task>> =
+        when (sortOrder) {
+            SortOrder.BY_DATE -> getTasksSortedByDateCreated(query, hideCompleted)
+            SortOrder.BY_NAME -> getTasksSortedByName(query, hideCompleted)
         }
+
+    @Query("DELETE FROM task_table WHERE completed=1")//delete all where completed is true
+    suspend fun deleteCompletedTask()
+
+
 }
 
